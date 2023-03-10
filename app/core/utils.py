@@ -45,3 +45,9 @@ def Check_Sql_Injection(request):
             return True
         
         return False
+    
+
+def Check_Admin_Credentials(request, user_id):
+    if Check_User_Token(request, user_id) and Check_Admin(user_id):
+        return True
+    return False

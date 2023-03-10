@@ -1,5 +1,5 @@
 from authentication.models import User
-from authentication.serializers import CredentialSerializer, DeleteUserSerializers
+from authentication.serializers import CredentialSerializer, DeleteUserSerializers, UserSerializers
 from core.utils import Check_User_Token, Delete_User_Token, Find_User, Check_Sql_Injection   
 from django.contrib.auth import authenticate,  update_session_auth_hash
 from rest_framework.views import APIView
@@ -8,8 +8,33 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.hashers import make_password
-from defense.blacklist import Blacklist
+from django.contrib.auth.hashers import make_password 
+from defense.blacklist import Blacklist 
+
+
+class Register(APIView):
+    def put(self, request):
+
+        if Blacklist(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = UserSerializers(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        found_user = User.objects.filter(id=request.data['email'])
+
+        if  found_user:
+            return Response(status=status.HTTP_208_ALREADY_REPORTED)
+        
+
+        user = User.objects.get_or_create(**serializer.data)
+
+        serializer = UserSerializers(user)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)  
+        
 
 
 class ProtectedView(APIView):
